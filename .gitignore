@@ -1,7 +1,6 @@
-# Documentation — ignore all MDs except session-continuity files
+# Documentation — ignore all MDs except the project guide
 *.md
 !CLAUDE.md
-!PROGRESS.md
 
 # Training logs and TensorBoard
 logs/
