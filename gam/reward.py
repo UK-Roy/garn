@@ -10,6 +10,7 @@ class RewardCalculator:
     def __init__(self, reward_cfg, env_cfg):
         self.goal_reward = reward_cfg.get('goal_reward', 1.0)
         self.collision_penalty = reward_cfg.get('collision_penalty', -0.25)
+        self.potential_weight = reward_cfg.get('potential_weight', 1.0)
         self.discomfort_dist = reward_cfg.get('discomfort_dist', 0.2)
         self.discomfort_penalty = reward_cfg.get('discomfort_penalty', -0.1)
         self.c1 = reward_cfg.get('c1', 0.05)
@@ -21,10 +22,12 @@ class RewardCalculator:
 
         # Tracking state for temporal rewards
         self._prev_robot_pos = None
+        self._prev_dist_to_goal = None
         self._prev_group_centers = {}
 
     def reset(self):
         self._prev_robot_pos = None
+        self._prev_dist_to_goal = None
         self._prev_group_centers = {}
 
     def compute(self, robot, pedestrians, obstacles, group_spaces, t, dt):
@@ -42,24 +45,34 @@ class RewardCalculator:
             'did_overtake': False,
         }
 
-        r_gl = self._goal_reward(robot, info)
+        curr_dist = robot.get_goal_dist()
+
+        r_gl = self._goal_reward(robot, curr_dist, info)
         if info['reached_goal']:
             self._prev_robot_pos = robot.pos.copy()
+            self._prev_dist_to_goal = curr_dist
             self._prev_group_centers = self._extract_group_centers(group_spaces)
             return r_gl, info
 
         r_obs = self._obstacle_reward(robot, obstacles, pedestrians, info)
         if info['collision']:
             self._prev_robot_pos = robot.pos.copy()
+            self._prev_dist_to_goal = curr_dist
             self._prev_group_centers = self._extract_group_centers(group_spaces)
             return r_obs, info
 
         r_prox = self._proximity_reward(robot, pedestrians, info)
         r_grp = self._group_reward(robot, group_spaces, info)
 
-        reward = r_gl + r_obs + r_prox + r_grp + self.time_penalty
+        # Potential-based shaping: dense reward for moving toward goal every step
+        r_potential = 0.0
+        if self._prev_dist_to_goal is not None:
+            r_potential = self.potential_weight * (self._prev_dist_to_goal - curr_dist)
+
+        reward = r_gl + r_obs + r_prox + r_grp + r_potential + self.time_penalty
 
         self._prev_robot_pos = robot.pos.copy()
+        self._prev_dist_to_goal = curr_dist
         self._prev_group_centers = self._extract_group_centers(group_spaces)
 
         return reward, info
@@ -67,8 +80,8 @@ class RewardCalculator:
     # ------------------------------------------------------------------
     # R_gl: goal reward
     # ------------------------------------------------------------------
-    def _goal_reward(self, robot, info):
-        if robot.get_goal_dist() < robot.radius + 0.1:
+    def _goal_reward(self, robot, curr_dist, info):
+        if curr_dist < robot.radius + 0.1:
             info['reached_goal'] = True
             return self.goal_reward
         return 0.0
