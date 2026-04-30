@@ -1,12 +1,21 @@
-torch>=2.0.0
-torchvision>=0.15.0
-torchaudio>=2.0.0
+# Core — install PyTorch first (CPU build below; swap for CUDA on GPU machines)
+# GPU: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+torch==2.5.1
+torchvision>=0.20.0
+
+# Reinforcement learning environment
 gymnasium>=1.0.0
+
+# Scientific computing
 numpy>=1.24.0
 scipy>=1.10.0
 scikit-learn>=1.2.0
+
+# Visualization and logging
 matplotlib>=3.7.0
+tensorboard>=2.13.0
+pandas>=2.0.0
+
+# Utilities
 pyyaml>=6.0
 tqdm>=4.65.0
-pandas>=2.0.0
-tensorboard>=2.13.0
