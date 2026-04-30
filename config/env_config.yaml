@@ -1,0 +1,55 @@
+# Environment configuration (matches paper Section IV-A)
+
+world:
+  size: 10.0          # square world side length in meters
+  dt: 0.25            # time step (seconds)
+  t_limit: 25.0       # episode time limit (seconds)
+
+robot:
+  radius: 0.25        # meters
+  v_pref: 1.0         # preferred speed (m/s)
+  start: [0.0, 0.5]
+  goal:  [2.0, 9.5]
+  sensor_range: 10.0  # full observability in simulation
+
+pedestrian:
+  radius: 0.3         # meters
+  v_pref: 1.0         # m/s
+  personal_space_a: 0.45   # Gaussian semi-axis a (major)
+  personal_space_b: 0.25   # Gaussian semi-axis b (minor)
+
+group:
+  d_frt: 2.0          # consideration range for surrounding groups (meters)
+  static_detection: fformation   # F-formation method
+  dynamic_detection: dbscan
+  dbscan_eps: 0.8     # DBSCAN epsilon
+  dbscan_min_samples: 2
+
+sfm:
+  # Social Force Model parameters
+  tau: 0.5            # relaxation time
+  A_ped: 2.0          # pedestrian repulsion strength
+  B_ped: 0.3          # pedestrian repulsion range
+  A_wall: 10.0        # wall repulsion strength
+  B_wall: 0.1         # wall repulsion range
+  group_cohesion: 0.5 # group cohesion force
+
+# Scenario S1 (paper Table I)
+scenario_s1:
+  n_individuals: 6
+  n_obstacles: 8
+  static_groups:
+    - members: 2
+  dynamic_groups:
+    - members: 3
+
+# Scenario S2 (paper Table I)
+scenario_s2:
+  n_individuals: 6
+  n_obstacles: 8
+  static_groups:
+    - members: 2
+    - members: 3
+  dynamic_groups:
+    - members: 3
+    - members: 4

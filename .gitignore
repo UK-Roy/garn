@@ -1,0 +1,44 @@
+# Documentation — ignore all MDs except session-continuity files
+*.md
+!CLAUDE.md
+!PROGRESS.md
+
+# Training logs and TensorBoard
+logs/
+runs/
+
+# Checkpoints (large binary files)
+checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environments
+.env
+*.env
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data and configs with sensitive info
+config/custom_env_spec.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

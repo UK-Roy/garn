@@ -1,0 +1,38 @@
+# STGAN model hyperparameters (matches paper Section IV-A-2)
+
+attention:
+  # MLP hidden sizes for attention extraction subnetwork
+  f_r_dims:  [256, 128]   # robot partial state MLP
+  f_o_dims:  [128, 128]   # obstacle partial state MLP
+  f_p_dims:  [256, 128]   # pedestrian partial state MLP
+  f_gp_dims: [128, 128]   # group partial state MLP
+  embed_dim: 128           # W_theta and W_phi output dimension
+
+relation:
+  # MLP hidden sizes for relation modeling
+  f_cs_dims:  [512, 256]  # agent state embedding MLP
+  f_cr_dims:  [128, 128]  # robot state embedding MLP (for relation)
+  f_gs_dims:  [512, 256]  # group state embedding MLP
+  f_egp_dims: [256, 128]  # encoded group position MLP
+  gcn_dims:   [256, 126]  # GCN layer output dimensions (L1=256, L2=126)
+  lstm_hidden: 126         # LSTM hidden size (matches GCN output)
+
+value:
+  f_v_dims: [256, 128, 128]  # value estimation MLP
+
+# Input feature dimensions
+input_dims:
+  robot_partial: 5     # [px, py, theta, vx, vy]
+  robot_full: 7        # [px, py, theta, vx, vy, r, vpref] + goal relative
+  obstacle_partial: 3  # [px, py, r] for circular
+  obstacle_full: 5     # [px, py, theta, w, l] for rectangular
+  pedestrian_partial: 5  # [px, py, theta, vx, vy]
+  pedestrian_full: 8    # [px, py, theta, vx, vy, personal_space, group_id, radius]
+  group_partial: 4      # [gx, gy, gvx, gvy]
+  group_full: 7         # [gx, gy, gvx, gvy, n_members, hull_area, dist_to_robot]
+
+action:
+  # Discrete action space: combinations of (speed, heading_change)
+  speeds: [0.0, 0.5, 1.0]              # fraction of v_pref
+  rotations: [-0.5236, -0.2618, 0.0, 0.2618, 0.5236]  # radians (~±30°, ±15°, 0)
+  # Total: 15 actions
