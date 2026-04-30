@@ -5,7 +5,7 @@ training:
   test_interval: 1000     # test every N training episodes
   test_episodes: 500      # episodes per test run
   save_interval: 1000     # save checkpoint every N episodes
-  log_interval: 100       # log to tensorboard every N episodes
+  log_interval: 50        # log to tensorboard + console every N episodes
   checkpoint_dir: checkpoints/
   log_dir: logs/
 
