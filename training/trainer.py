@@ -103,14 +103,16 @@ class Trainer:
 
             # Evaluation
             if (episode + 1) % self.test_interval == 0:
-                tqdm.write(f"\n[Eval] Episode {episode + 1}")
+                tqdm.write(f"\n[Eval] Episode {episode + 1} — running test episodes...")
+                all_metrics = {}
                 for scen in ['s1', 's2']:
                     metrics = self.evaluator.evaluate(
                         self.policy.online_net, scen,
                         n_episodes=self.train_cfg['training']['test_episodes'])
                     self._log_metrics(metrics, scen, episode)
-                    self._print_metrics(metrics, scen)
-                tqdm.write("")
+                    all_metrics[scen] = metrics
+                Evaluator.print_table(all_metrics['s1'], all_metrics['s2'])
+
 
             # Checkpoint
             if (episode + 1) % self.save_interval == 0:
@@ -165,6 +167,3 @@ class Trainer:
         for k, v in metrics.items():
             self.writer.add_scalar(f'{prefix}/{k}', v, episode)
 
-    def _print_metrics(self, metrics, scenario):
-        print(f"  Scenario {scenario.upper()}: " +
-              " | ".join(f"{k}={v:.3f}" for k, v in metrics.items()))
