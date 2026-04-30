@@ -175,11 +175,23 @@ class CrowdNavEnv(gym.Env):
             if members:
                 self.group_spaces[gid] = GroupSpace(gid, members)
 
+    def _safe_pos(self, low, high, clearance_pos, min_clearance=1.5, max_tries=50):
+        """Sample a position that is at least min_clearance away from clearance_pos."""
+        pos = self._rng.uniform(low, high)
+        for _ in range(max_tries):
+            if np.linalg.norm(pos - clearance_pos) >= min_clearance:
+                return pos
+            pos = self._rng.uniform(low, high)
+        return pos
+
     def _spawn_obstacles(self, n_obstacles):
         obstacles = []
         half = self.world_size / 2
+        robot_start = np.array(self.env_cfg['robot']['start'])
         for i in range(n_obstacles):
-            pos = self._rng.uniform([-half + 1, 1], [half - 1, self.world_size - 1])
+            pos = self._safe_pos(
+                [-half + 1, 1], [half - 1, self.world_size - 1],
+                robot_start, min_clearance=1.5)
             if self._rng.random() < 0.6:
                 radius = self._rng.uniform(0.2, 0.5)
                 obstacles.append(CircularObstacle(i, pos, radius))
@@ -194,10 +206,11 @@ class CrowdNavEnv(gym.Env):
         pedestrians = []
         ped_id = 0
         half = self.world_size / 2
+        robot_start = np.array(self.env_cfg['robot']['start'])
 
         # Individual pedestrians
         for _ in range(scen_cfg['n_individuals']):
-            pos, goal = self._random_start_goal(half)
+            pos, goal = self._random_start_goal(half, avoid=robot_start)
             vel = self._rng.uniform(-0.5, 0.5, size=2)
             p = Pedestrian(ped_id, pos, vel, group_id=0,
                            theta=np.arctan2(vel[1] + 1e-8, vel[0] + 1e-8))
@@ -208,23 +221,24 @@ class CrowdNavEnv(gym.Env):
         # Static group members
         group_id = 1
         for grp in scen_cfg.get('static_groups', []):
-            center = self._rng.uniform([-half + 2, 2], [half - 2, self.world_size - 2])
+            center = self._safe_pos(
+                [-half + 2, 2], [half - 2, self.world_size - 2],
+                robot_start, min_clearance=2.0)
             for j in range(grp['members']):
                 offset = self._rng.uniform(-0.5, 0.5, size=2)
                 pos = center + offset
-                # Face inward (toward center)
                 toward_center = center - pos
                 theta = np.arctan2(toward_center[1], toward_center[0])
-                vel = np.zeros(2)  # static groups are stationary
+                vel = np.zeros(2)
                 p = Pedestrian(ped_id, pos, vel, group_id=group_id, theta=theta)
-                p.set_goal(center)  # hover around center
+                p.set_goal(center)
                 pedestrians.append(p)
                 ped_id += 1
             group_id += 1
 
         # Dynamic group members
         for grp in scen_cfg.get('dynamic_groups', []):
-            start, goal = self._random_start_goal(half)
+            start, goal = self._random_start_goal(half, avoid=robot_start)
             shared_theta = np.arctan2(goal[1] - start[1], goal[0] - start[0])
             for j in range(grp['members']):
                 offset = self._rng.uniform(-0.4, 0.4, size=2)
@@ -241,9 +255,15 @@ class CrowdNavEnv(gym.Env):
 
         return pedestrians
 
-    def _random_start_goal(self, half):
-        pos = self._rng.uniform([-half + 0.5, 0.5],
-                                [half - 0.5, self.world_size - 0.5])
+    def _random_start_goal(self, half, avoid=None, min_clearance=1.5):
+        """Random position/goal pair, optionally keeping min_clearance from avoid point."""
+        pos = self._rng.uniform([-half + 0.5, 0.5], [half - 0.5, self.world_size - 0.5])
+        if avoid is not None:
+            for _ in range(50):
+                if np.linalg.norm(pos - avoid) >= min_clearance:
+                    break
+                pos = self._rng.uniform([-half + 0.5, 0.5],
+                                        [half - 0.5, self.world_size - 0.5])
         goal = self._rng.uniform([-half + 0.5, 0.5],
                                  [half - 0.5, self.world_size - 0.5])
         while np.linalg.norm(goal - pos) < 2.0:

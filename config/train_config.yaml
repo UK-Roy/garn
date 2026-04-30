@@ -18,7 +18,7 @@ dqn:
   gamma: 0.9              # discount factor
   epsilon_start: 1.0      # initial exploration rate
   epsilon_end: 0.05       # final exploration rate
-  epsilon_decay: 10000    # decay over this many episodes
+  epsilon_decay: 5000     # decay over this many episodes (was 10000, faster convergence)
   buffer_size: 50000      # replay buffer capacity
   batch_size: 64
   target_update: 200      # steps between target network updates
